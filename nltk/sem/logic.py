@@ -393,6 +393,12 @@ class SubstituteBindingsI(object):
 class Expression(SubstituteBindingsI):
     """This is the base abstract object for all logical expressions"""
 
+    _logic_parser = _LogicParser()
+
+    @classmethod
+    def fromstring(cls, s):
+        return _logic_parser.parse(s)
+
     def __call__(self, other, *additional):
         accum = self.applyto(other)
         for a in additional:
@@ -653,7 +659,7 @@ class ApplicationExpression(Expression):
     with another Expression, such as a LambdaExpression, which would mean that
     the Predicate should be thought of as being applied to the arguments.
 
-    The LogicParser will always curry arguments in a application expression.
+    The logical expression parser will always curry arguments in a application expression.
     So, "\x y.see(x,y)(john,mary)" will be represented internally as
     "((\x y.(see(x))(y))(john))(mary)".  This simplifies the internals since
     there will always be exactly one argument in an application.
@@ -1302,7 +1308,7 @@ class EqualityExpression(BinaryExpression):
 
 
 @python_2_unicode_compatible
-class LogicParser(object):
+class _LogicParser(object):
     """A lambda calculus expression parser."""
 
     def __init__(self, type_check=False):
@@ -1750,7 +1756,7 @@ def parse_logic(s, logic_parser=None, encoding=None):
     :param s: the contents of the file
     :type s: str
     :param logic_parser: The parser to be used to parse the logical expression
-    :type logic_parser: LogicParser
+    :type logic_parser: _LogicParser
     :param encoding: the encoding of the input string, if it is binary
     :type encoding: str
     :return: a list of parsed formulas.
@@ -1759,7 +1765,7 @@ def parse_logic(s, logic_parser=None, encoding=None):
     if encoding is not None:
         s = s.decode(encoding)
     if logic_parser is None:
-        logic_parser = LogicParser()
+        logic_parser = _LogicParser()
 
     statements = []
     for linenum, line in enumerate(s.splitlines()):
@@ -1849,7 +1855,7 @@ def is_eventvar(expr):
 
 
 def demo():
-    p = LogicParser().parse
+    p = Expression.fromstring
     print('='*20 + 'Test parser' + '='*20)
     print(p(r'john'))
     print(p(r'man(x)'))
@@ -1898,7 +1904,7 @@ def demo_errors():
 
 def demoException(s):
     try:
-        LogicParser().parse(s)
+        Expression.fromstring(s)
     except ParseException as e:
         print("%s: %s" % (e.__class__.__name__, e))
 
